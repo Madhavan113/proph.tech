@@ -139,64 +139,81 @@ ALTER TABLE public.bet_cancellations ENABLE ROW LEVEL SECURITY;
 -- 11. Create RLS policies
 
 -- Appeals policies
+DROP POLICY IF EXISTS "Users can view their own appeals" ON public.appeals;
 CREATE POLICY "Users can view their own appeals" ON public.appeals
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can create appeals" ON public.appeals;
 CREATE POLICY "Users can create appeals" ON public.appeals
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all appeals" ON public.appeals;
 CREATE POLICY "Admins can view all appeals" ON public.appeals
   FOR ALL USING (
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
 
 -- Comments policies
+DROP POLICY IF EXISTS "Anyone can view non-deleted comments" ON public.bet_comments;
 CREATE POLICY "Anyone can view non-deleted comments" ON public.bet_comments
   FOR SELECT USING (deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "Authenticated users can create comments" ON public.bet_comments;
 CREATE POLICY "Authenticated users can create comments" ON public.bet_comments
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own comments" ON public.bet_comments;
 CREATE POLICY "Users can update their own comments" ON public.bet_comments
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can soft delete their own comments" ON public.bet_comments;
 CREATE POLICY "Users can soft delete their own comments" ON public.bet_comments
   FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (deleted_at IS NOT NULL);
 
 -- Notifications policies
+DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
 CREATE POLICY "Users can view their own notifications" ON public.notifications
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own notifications" ON public.notifications;
 CREATE POLICY "Users can update their own notifications" ON public.notifications
   FOR UPDATE USING (auth.uid() = user_id);
 
 -- User preferences policies
+DROP POLICY IF EXISTS "Users can view their own preferences" ON public.user_preferences;
 CREATE POLICY "Users can view their own preferences" ON public.user_preferences
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own preferences" ON public.user_preferences;
 CREATE POLICY "Users can update their own preferences" ON public.user_preferences
   FOR ALL USING (auth.uid() = user_id);
 
 -- Payment transactions policies
+DROP POLICY IF EXISTS "Users can view their own payments" ON public.payment_transactions;
 CREATE POLICY "Users can view their own payments" ON public.payment_transactions
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "System can create payment records" ON public.payment_transactions;
 CREATE POLICY "System can create payment records" ON public.payment_transactions
   FOR INSERT WITH CHECK (true); -- Will be restricted by API
 
 -- Withdrawal requests policies
+DROP POLICY IF EXISTS "Users can view their own withdrawals" ON public.withdrawal_requests;
 CREATE POLICY "Users can view their own withdrawals" ON public.withdrawal_requests
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can create withdrawal requests" ON public.withdrawal_requests;
 CREATE POLICY "Users can create withdrawal requests" ON public.withdrawal_requests
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can manage withdrawals" ON public.withdrawal_requests;
 CREATE POLICY "Admins can manage withdrawals" ON public.withdrawal_requests
   FOR ALL USING (
     EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
 
 -- Bet cancellations policies
+DROP POLICY IF EXISTS "Anyone can view bet cancellations" ON public.bet_cancellations;
 CREATE POLICY "Anyone can view bet cancellations" ON public.bet_cancellations
   FOR SELECT USING (true);
 

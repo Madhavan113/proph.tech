@@ -3,19 +3,7 @@
 ## Overview
 This document provides a comprehensive list of incomplete or missing backend features identified in the Prophet betting platform, along with implementation priorities and technical details.
 
-## Critical Issues (Priority 1)
-
-### 1. Database Schema Mismatches
-- **Issue**: The `create-market` endpoint was using `arbitrator_contact` but schema defines `arbitrator_email`
-- **Status**: ✅ Fixed - Updated to use correct field name and RPC function
-- **Files Affected**: `src/app/api/create-market/route.ts`
-
-### 2. RPC Function Integration
-- **Issue**: API endpoints not utilizing the atomic RPC functions
-- **Status**: ✅ Partially Fixed - `create-market` now uses RPC
-- **Remaining**: Other endpoints may need similar updates
-
-## Missing Core Features (Priority 2)
+## Missing Core Features (Priority 1)
 
 ### 1. Appeals System
 **Description**: Allow users to appeal AI arbitration decisions

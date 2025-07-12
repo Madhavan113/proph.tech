@@ -9,6 +9,11 @@ Prophet is a peer-to-peer betting platform where users can create bets on anythi
   - Friend/Family arbitrators for personal verification
   - AI arbitrators with appeal process for automated decisions
 - **User-Friendly**: Simple email/social login, no crypto complexity
+- **Authentication Features**:
+  - Email/password login
+  - Magic link (passwordless) login
+  - Forgot password with email reset
+  - Secure password reset flow
 - **Real-Time Updates**: Live updates on bet status and resolutions
 - **Secure**: Built with Supabase Row Level Security
 
@@ -133,6 +138,14 @@ src/
 │   └── database.ts       # TypeScript database types
 └── components/           # React components (to be created)
 ```
+
+## Email Customization
+
+Prophet uses Supabase for authentication emails (magic links, password resets, etc.). You can customize these emails:
+
+1. **Via Supabase Dashboard**: Navigate to Authentication → Email Templates to customize email content and styling
+2. **Custom SMTP**: Configure your own SMTP provider (SendGrid, Mailgun, etc.) in Supabase settings
+3. **Advanced**: Implement custom email flows - see `SUPABASE_EMAIL_CUSTOMIZATION.md` for detailed instructions
 
 ## Contributing
 

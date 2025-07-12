@@ -5,8 +5,24 @@ import { motion } from 'framer-motion'
 import BetCard from '@/components/BetCard'
 import { cn } from '@/lib/utils'
 
+interface Bet {
+  id: string
+  title: string
+  description?: string
+  deadline: string
+  creator?: {
+    username?: string
+    full_name?: string
+  }
+  participant_count?: number
+  total_pool?: number
+  resolved?: boolean
+  outcome?: boolean | null
+  yes_percentage?: number
+}
+
 export default function FeedPage() {
-  const [bets, setBets] = useState<any[]>([])
+  const [bets, setBets] = useState<Bet[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'active' | 'resolved'>('all')
 
@@ -40,93 +56,46 @@ export default function FeedPage() {
   }
 
   const filterOptions = [
-    { value: 'all', label: 'All Markets', icon: '📊' },
-    { value: 'active', label: 'Active', icon: '🟢' },
-    { value: 'resolved', label: 'Resolved', icon: '✅' }
+    { value: 'all', label: 'All Markets' },
+    { value: 'active', label: 'Active' },
+    { value: 'resolved', label: 'Resolved' }
   ]
 
   return (
     <div className="min-h-screen pt-24 pb-12">
-      {/* Market-style background */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
-        <div className="absolute inset-0 gradient-radial-market" />
-        <div className="absolute inset-0 noise" />
-      </div>
-
-      {/* Animated grid */}
-      <div className="fixed inset-0 -z-10 overflow-hidden opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-                           linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)`,
-          backgroundSize: '100px 100px'
-        }} />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-12"
         >
-          <h1 className="text-4xl font-bold mb-2 gradient-market">
-            Prediction Markets
+          <h1 className="font-display text-5xl font-bold mb-4">
+            Markets
           </h1>
-          <p className="text-gray-400">
-            Trade on the future. Profit from your predictions.
+          <p className="text-xl text-muted">
+            Trade on the outcome of future events
           </p>
-        </motion.div>
-
-        {/* Market Stats Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-4 gap-4 mb-8"
-        >
-          <div className="stat-card">
-            <div className="text-xs text-gray-500 mb-1">Total Markets</div>
-            <div className="text-2xl font-bold text-market-blue">1,247</div>
-            <div className="text-xs text-market-green">+12.5%</div>
-          </div>
-          <div className="stat-card">
-            <div className="text-xs text-gray-500 mb-1">24h Volume</div>
-            <div className="text-2xl font-bold text-market-green">$2.4M</div>
-            <div className="text-xs text-market-green">+8.3%</div>
-          </div>
-          <div className="stat-card">
-            <div className="text-xs text-gray-500 mb-1">Active Traders</div>
-            <div className="text-2xl font-bold text-market-purple">8,923</div>
-            <div className="text-xs text-market-red">-2.1%</div>
-          </div>
-          <div className="stat-card">
-            <div className="text-xs text-gray-500 mb-1">Markets Resolved</div>
-            <div className="text-2xl font-bold text-gray-400">892</div>
-            <div className="text-xs text-gray-500">Today</div>
-          </div>
         </motion.div>
 
         {/* Filter Tabs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="flex gap-2 mb-8"
+          transition={{ delay: 0.1 }}
+          className="flex gap-4 mb-12"
         >
           {filterOptions.map((option) => (
             <button
               key={option.value}
               onClick={() => setFilter(option.value as 'all' | 'active' | 'resolved')}
               className={cn(
-                "px-6 py-3 rounded-lg font-medium transition-all duration-300",
-                "flex items-center gap-2",
+                "px-6 py-2 rounded-full text-sm font-medium transition-all duration-200",
                 filter === option.value
-                  ? "bg-gradient-to-r from-market-blue to-market-purple text-white shadow-lg"
-                  : "glass-market border border-white/10 text-gray-400 hover:text-gray-200 hover:border-white/20"
+                  ? "bg-prophet-green text-prophet-black"
+                  : "border border-border hover:border-prophet-green"
               )}
             >
-              <span>{option.icon}</span>
               {option.label}
             </button>
           ))}
@@ -141,7 +110,7 @@ export default function FeedPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: i * 0.1 }}
-                className="market-card rounded-xl h-64 animate-pulse-slow"
+                className="prophet-card rounded-lg h-64 skeleton"
               />
             ))}
           </div>
@@ -151,14 +120,16 @@ export default function FeedPage() {
             animate={{ opacity: 1 }}
             className="text-center py-20"
           >
-            <div className="glass-market rounded-2xl p-12 max-w-md mx-auto border border-white/10">
-              <div className="text-6xl mb-4">📈</div>
-              <h3 className="text-xl font-semibold text-gray-200 mb-2">
+            <div className="glass rounded-lg p-12 max-w-md mx-auto">
+              <h3 className="font-display text-2xl font-semibold mb-4">
                 No markets found
               </h3>
-              <p className="text-gray-400">
-                Be the first to create a prediction market!
+              <p className="text-muted mb-8">
+                Be the first to create a prediction market
               </p>
+              <a href="/create" className="btn btn-primary px-6 py-2 rounded-full">
+                Create Market
+              </a>
             </div>
           </motion.div>
         ) : (
@@ -177,13 +148,8 @@ export default function FeedPage() {
             transition={{ delay: 0.5 }}
             className="mt-12 text-center"
           >
-            <button className={cn(
-              "px-8 py-3 rounded-lg font-medium",
-              "glass-market border border-white/10",
-              "hover:bg-white/5 text-gray-300",
-              "transition-all duration-300"
-            )}>
-              Load More Markets
+            <button className="btn btn-secondary px-8 py-3 rounded-full">
+              Load More
             </button>
           </motion.div>
         )}

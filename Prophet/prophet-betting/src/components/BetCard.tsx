@@ -37,47 +37,47 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -2 }}
       className="group"
     >
       <Link href={`/bet/${bet.id}`}>
         <div className={cn(
-          "market-card rounded-xl p-5 h-full",
+          "prophet-card rounded-lg p-6 h-full",
           "transition-all duration-300",
           "relative overflow-hidden"
         )}>
           {/* Market status badge */}
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-4 right-4">
             {bet.resolved ? (
-              <span className="badge-resolved">Resolved</span>
+              <span className="badge badge-default">Resolved</span>
             ) : isExpired ? (
-              <span className="badge-market bg-orange-500/10 border-orange-500/30 text-orange-500">
+              <span className="badge badge-default">
                 Pending
               </span>
             ) : (
-              <span className="badge-active">Active</span>
+              <span className="badge badge-active">Active</span>
             )}
           </div>
           
           {/* Content */}
           <div className="relative z-10">
             {/* Title */}
-            <h3 className="text-base font-semibold text-gray-100 mb-3 line-clamp-2 pr-20">
+            <h3 className="text-lg font-medium mb-4 line-clamp-2 pr-20">
               {bet.title}
             </h3>
 
             {/* Probability Display */}
             {!bet.resolved && (
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-market-green">{yesPercentage}%</span>
-                      <span className="text-xs text-gray-500">YES</span>
+              <div className="mb-6">
+                <div className="flex justify-between items-baseline mb-3">
+                  <div className="flex items-baseline gap-6">
+                    <div>
+                      <span className="text-3xl font-bold">{yesPercentage}%</span>
+                      <span className="text-sm text-muted ml-2">YES</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-market-red">{100 - yesPercentage}%</span>
-                      <span className="text-xs text-gray-500">NO</span>
+                    <div>
+                      <span className="text-3xl font-bold text-muted">{100 - yesPercentage}%</span>
+                      <span className="text-sm text-muted ml-2">NO</span>
                     </div>
                   </div>
                 </div>
@@ -94,36 +94,36 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
 
             {/* Resolved outcome */}
             {bet.resolved && bet.outcome !== null && (
-              <div className="mb-4">
+              <div className="mb-6">
                 <div className={cn(
-                  "text-2xl font-bold",
-                  bet.outcome ? "text-market-green" : "text-market-red"
+                  "text-3xl font-bold",
+                  bet.outcome ? "text-prophet-green" : "text-foreground"
                 )}>
                   {bet.outcome ? "YES" : "NO"}
                 </div>
-                <span className="text-xs text-gray-500">Final outcome</span>
+                <span className="text-sm text-muted">Final outcome</span>
               </div>
             )}
 
             {/* Market stats */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="stat-card">
-                <div className="text-xs text-gray-500 mb-1">Volume</div>
-                <div className="text-sm font-semibold text-gray-200">
+            <div className="flex gap-6 mb-6 text-sm">
+              <div>
+                <div className="text-muted mb-1">Volume</div>
+                <div className="font-medium">
                   {bet.total_pool?.toFixed(0) || 0}
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="text-xs text-gray-500 mb-1">Traders</div>
-                <div className="text-sm font-semibold text-gray-200">
+              <div>
+                <div className="text-muted mb-1">Traders</div>
+                <div className="font-medium">
                   {bet.participant_count || 0}
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="text-xs text-gray-500 mb-1">
+              <div>
+                <div className="text-muted mb-1">
                   {bet.resolved ? 'Ended' : 'Ends in'}
                 </div>
-                <div className="text-sm font-semibold text-gray-200">
+                <div className="font-medium">
                   {bet.resolved ? (
                     new Date(bet.deadline).toLocaleDateString('en-US', { 
                       month: 'short', 
@@ -140,13 +140,13 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
 
             {/* Quick bet buttons (show on hover) */}
             {!bet.resolved && !isExpired && (
-              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button
                   onClick={(e) => {
                     e.preventDefault()
                     // In real app, this would open a bet modal
                   }}
-                  className="flex-1 py-2 px-3 rounded-lg btn-bet-yes text-sm font-semibold"
+                  className="flex-1 btn btn-yes btn-bet rounded-full py-2"
                 >
                   Buy YES
                 </button>
@@ -155,7 +155,7 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
                     e.preventDefault()
                     // In real app, this would open a bet modal
                   }}
-                  className="flex-1 py-2 px-3 rounded-lg btn-bet-no text-sm font-semibold"
+                  className="flex-1 btn btn-no btn-bet rounded-full py-2"
                 >
                   Buy NO
                 </button>
@@ -164,12 +164,9 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
 
             {/* Creator info */}
             {bet.creator && (
-              <div className="mt-3 pt-3 border-t border-gray-800">
-                <span className="text-xs text-gray-500">
-                  Created by{' '}
-                  <span className="text-gray-400">
-                    {bet.creator.username || bet.creator.full_name || 'Anonymous'}
-                  </span>
+              <div className="mt-4 pt-4 border-t border-border">
+                <span className="text-sm text-muted">
+                  by {bet.creator.username || bet.creator.full_name || 'Anonymous'}
                 </span>
               </div>
             )}

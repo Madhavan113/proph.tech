@@ -7,11 +7,12 @@ import { cn } from '@/lib/utils'
 import { useBalance } from '@/hooks/useBalance'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
 
 export default function Navigation() {
   const pathname = usePathname()
   const { balance } = useBalance()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const supabase = createClient()
 
@@ -30,33 +31,29 @@ export default function Navigation() {
   }, [supabase])
 
   const navItems = [
-    { href: '/feed', label: 'Markets', icon: '📊' },
-    { href: '/create', label: 'Create', icon: '➕' },
+    { href: '/feed', label: 'Markets' },
+    { href: '/create', label: 'Create' },
   ]
 
   if (!user) return null
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      className="fixed top-0 left-0 right-0 z-50 px-4 py-4"
-    >
+    <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-6">
       <div className="max-w-7xl mx-auto">
-        <div className="glass-market rounded-xl px-6 py-3 flex items-center justify-between border border-white/10">
+        <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center">
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="text-2xl font-bold gradient-market"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="font-display text-2xl font-bold"
             >
               Prophet
             </motion.div>
           </Link>
 
           {/* Center Navigation */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-8">
             {navItems.map((item) => {
               const isActive = pathname === item.href
               return (
@@ -65,17 +62,13 @@ export default function Navigation() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={cn(
-                      "px-4 py-2 rounded-lg transition-all duration-300",
-                      "flex items-center gap-2",
+                      "text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "bg-gradient-to-r from-market-blue/20 to-market-purple/20 text-white"
-                        : "hover:bg-white/5 text-gray-400 hover:text-gray-200"
+                        ? "text-prophet-green"
+                        : "text-muted hover:text-foreground"
                     )}
                   >
-                    <span>{item.icon}</span>
-                    <span className="text-sm font-medium">
-                      {item.label}
-                    </span>
+                    {item.label}
                   </motion.div>
                 </Link>
               )
@@ -83,34 +76,26 @@ export default function Navigation() {
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
             {/* Balance Display */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="glass-market rounded-lg px-4 py-2 border border-market-green/20"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">Balance</span>
-                <span className="text-sm font-bold text-market-green">
-                  {balance?.toFixed(0) || '0'}
-                </span>
-                <span className="text-xs text-gray-500">credits</span>
-              </div>
-            </motion.div>
+            <div className="text-sm">
+              <span className="text-muted">Balance: </span>
+              <span className="font-medium text-prophet-green">
+                {balance?.toFixed(0) || '0'}
+              </span>
+            </div>
 
             {/* User Menu */}
             <div className="relative">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className={cn(
-                  "w-10 h-10 rounded-lg",
-                  "bg-gradient-to-r from-market-blue to-market-purple",
+                  "w-8 h-8 rounded-full",
+                  "bg-prophet-green text-prophet-black",
                   "flex items-center justify-center",
-                  "text-white font-bold",
-                  "shadow-lg"
+                  "text-sm font-bold ui-sans"
                 )}
               >
                 {user?.email?.[0]?.toUpperCase() || 'U'}
@@ -122,18 +107,18 @@ export default function Navigation() {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 mt-2 w-48 glass-market rounded-lg border border-white/10 overflow-hidden"
+                  className="absolute right-0 mt-2 w-48 bg-background border border-border rounded-lg shadow-lg overflow-hidden"
                 >
-                  <div className="p-3 border-b border-white/10">
-                    <p className="text-xs text-gray-400">Signed in as</p>
-                    <p className="text-sm text-gray-200 truncate">{user?.email}</p>
+                  <div className="p-3 border-b border-border">
+                    <p className="text-xs text-muted">Signed in as</p>
+                    <p className="text-sm truncate">{user?.email}</p>
                   </div>
                   <button
                     onClick={async () => {
                       await supabase.auth.signOut()
                       setShowUserMenu(false)
                     }}
-                    className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/5 transition-colors"
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                   >
                     Sign Out
                   </button>
@@ -144,31 +129,14 @@ export default function Navigation() {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
-            <button className="text-gray-400 hover:text-gray-200">
+            <button className="text-muted hover:text-foreground">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
           </div>
         </div>
-
-        {/* Market Ticker (optional decorative element) */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-2 flex items-center gap-4 text-xs text-gray-500 px-6"
-        >
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-market-green rounded-full animate-pulse"></span>
-            Markets Online
-          </span>
-          <span>•</span>
-          <span>24/7 Trading</span>
-          <span>•</span>
-          <span>Instant Settlement</span>
-        </motion.div>
       </div>
-    </motion.nav>
+    </nav>
   )
 }
