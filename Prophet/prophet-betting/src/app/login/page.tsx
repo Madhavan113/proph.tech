@@ -83,31 +83,28 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <label className="block text-sm font-medium mb-2">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
                 Email
               </label>
               <input
+                id="email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input w-full px-4 py-3 rounded-lg"
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="you@example.com"
                 required
+                autoComplete="email"
+                disabled={loading}
+                style={{ zIndex: 10, position: 'relative' }}
               />
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
+            <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium">
+                <label htmlFor="password" className="block text-sm font-medium">
                   Password
                 </label>
                 <Link 
@@ -118,14 +115,19 @@ export default function LoginPage() {
                 </Link>
               </div>
               <input
+                id="password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input w-full px-4 py-3 rounded-lg"
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="••••••••"
                 required
+                autoComplete="current-password"
+                disabled={loading}
+                style={{ zIndex: 10, position: 'relative' }}
               />
-            </motion.div>
+            </div>
 
             {error && (
               <motion.div
@@ -142,19 +144,11 @@ export default function LoginPage() {
               </motion.div>
             )}
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="space-y-3"
-            >
+            <div className="space-y-3">
               <button
                 type="submit"
                 disabled={loading}
-                className={cn(
-                  "w-full btn btn-primary py-3 rounded-full",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
+                className="w-full btn btn-primary py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
@@ -163,14 +157,11 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleMagicLink}
                 disabled={loading}
-                className={cn(
-                  "w-full btn btn-secondary py-3 rounded-full",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
+                className="w-full btn btn-secondary py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Send Magic Link
               </button>
-            </motion.div>
+            </div>
           </form>
 
           {/* Divider */}

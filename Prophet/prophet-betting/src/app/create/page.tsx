@@ -98,45 +98,42 @@ export default function CreatePage() {
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Market Question */}
             <div className="prophet-card rounded-lg p-8">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <label className="block text-sm font-medium mb-3">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium mb-3">
                   Market Question
                 </label>
                 <input
+                  id="title"
+                  name="title"
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="input w-full px-4 py-3 rounded-lg"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
                   placeholder="Will Bitcoin reach $100k by end of 2025?"
                   required
+                  style={{ zIndex: 10, position: 'relative' }}
                 />
                 <p className="mt-3 text-sm text-muted">
                   Frame as a yes/no question that can be definitively resolved
                 </p>
-              </motion.div>
+              </div>
 
               {/* Description */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mt-8"
-              >
-                <label className="block text-sm font-medium mb-3">
+              <div className="mt-8">
+                <label htmlFor="description" className="block text-sm font-medium mb-3">
                   Resolution Criteria (optional)
                 </label>
                 <textarea
+                  id="description"
+                  name="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="input w-full px-4 py-3 rounded-lg resize-none"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-none"
                   rows={3}
                   placeholder="Specify exact conditions for YES resolution..."
+                  style={{ zIndex: 10, position: 'relative' }}
                 />
-              </motion.div>
+              </div>
             </div>
 
             {/* Market Settings */}
@@ -144,55 +141,48 @@ export default function CreatePage() {
               <h3 className="font-display text-2xl font-semibold mb-6">Settings</h3>
               
               {/* Deadline */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <label className="block text-sm font-medium mb-3">
+              <div>
+                <label htmlFor="deadline" className="block text-sm font-medium mb-3">
                   Resolution Date
                 </label>
                 <input
+                  id="deadline"
+                  name="deadline"
                   type="datetime-local"
                   value={formData.deadline}
                   onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                   min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
-                  className="input w-full px-4 py-3 rounded-lg"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
                   required
+                  style={{ zIndex: 10, position: 'relative' }}
                 />
-              </motion.div>
+              </div>
 
               {/* Minimum Stake */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="mt-6"
-              >
-                <label className="block text-sm font-medium mb-3">
+              <div className="mt-6">
+                <label htmlFor="minimumStake" className="block text-sm font-medium mb-3">
                   Minimum Trade Amount
                 </label>
                 <input
+                  id="minimumStake"
+                  name="minimumStake"
                   type="number"
                   value={formData.minimumStake}
                   onChange={(e) => setFormData({ ...formData, minimumStake: e.target.value })}
-                  className="input w-full px-4 py-3 rounded-lg"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
                   min="1"
                   step="1"
                   required
+                  style={{ zIndex: 10, position: 'relative' }}
                 />
-              </motion.div>
+              </div>
             </div>
 
-            {/* Arbitrator Selection */}
+                          {/* Arbitrator Selection */}
             <div className="prophet-card rounded-lg p-8">
               <h3 className="font-display text-2xl font-semibold mb-6">Resolution Method</h3>
               
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
+              <div>
                 <div className="grid grid-cols-3 gap-4">
                   {[
                     { value: 'creator', label: 'Self', desc: 'You resolve' },
@@ -204,10 +194,10 @@ export default function CreatePage() {
                       type="button"
                       onClick={() => setFormData({ ...formData, arbitratorType: option.value })}
                       className={cn(
-                        "p-4 rounded-lg text-center transition-all duration-200",
+                        "p-4 rounded-lg text-center transition-all duration-200 bg-transparent",
                         formData.arbitratorType === option.value
-                          ? "bg-prophet-green text-prophet-black"
-                          : "border border-border hover:border-prophet-green"
+                          ? "border-2 border-white text-foreground"
+                          : "border border-gray-300 text-foreground hover:border-gray-400"
                       )}
                     >
                       <div className="font-medium">{option.label}</div>
@@ -215,60 +205,46 @@ export default function CreatePage() {
                     </button>
                   ))}
                 </div>
-              </motion.div>
+              </div>
 
               {/* Friend Email */}
               {formData.arbitratorType === 'friend' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mt-6"
-                >
-                  <label className="block text-sm font-medium mb-3">
+                <div className="mt-6">
+                  <label htmlFor="arbitratorEmail" className="block text-sm font-medium mb-3">
                     Arbitrator&apos;s Email
                   </label>
                   <input
+                    id="arbitratorEmail"
+                    name="arbitratorEmail"
                     type="email"
                     value={formData.arbitratorEmail}
                     onChange={(e) => setFormData({ ...formData, arbitratorEmail: e.target.value })}
-                    className="input w-full px-4 py-3 rounded-lg"
+                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
                     placeholder="trusted@friend.com"
                     required
+                    style={{ zIndex: 10, position: 'relative' }}
                   />
-                </motion.div>
+                </div>
               )}
             </div>
 
             {/* Submit Button */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
+            <div>
               <button
                 type="submit"
                 disabled={loading}
-                className={cn(
-                  "w-full btn btn-primary py-4 rounded-full text-lg font-medium",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
+                className="w-full btn btn-primary py-4 rounded-full text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Creating Market...' : 'Create Market'}
               </button>
-            </motion.div>
+            </div>
 
             {/* Info */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="text-center"
-            >
+            <div className="text-center">
               <p className="text-sm text-muted">
                 Markets are binding • Trades cannot be reversed • Resolution is final
               </p>
-            </motion.div>
+            </div>
           </form>
         </motion.div>
       </div>
