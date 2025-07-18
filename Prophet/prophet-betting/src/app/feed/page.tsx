@@ -90,7 +90,7 @@ export default function FeedPage() {
               key={option.value}
               onClick={() => setFilter(option.value as 'all' | 'active' | 'resolved')}
               className={cn(
-                "px-6 py-2 rounded-full text-sm font-medium transition-all duration-200",
+                "px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer",
                 filter === option.value
                   ? "bg-prophet-green text-prophet-black"
                   : "border border-border hover:border-prophet-green"
@@ -148,7 +148,7 @@ export default function FeedPage() {
             transition={{ delay: 0.5 }}
             className="mt-12 text-center"
           >
-            <button className="btn btn-secondary px-8 py-3 rounded-full">
+            <button className="btn btn-secondary px-8 py-3 rounded-full cursor-pointer">
               Load More
             </button>
           </motion.div>

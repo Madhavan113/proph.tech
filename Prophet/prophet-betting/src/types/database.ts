@@ -129,6 +129,23 @@ export interface Database {
           created_at?: string
         }
       }
+      Waitlists: {
+        Row: {
+          id: string
+          created_at: string
+          email: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          email?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          email?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -146,3 +163,4 @@ export type User = Database['public']['Tables']['users']['Row']
 export type Bet = Database['public']['Tables']['bets']['Row']
 export type BetParticipant = Database['public']['Tables']['bet_participants']['Row']
 export type ArbitratorDecision = Database['public']['Tables']['arbitrator_decisions']['Row']
+export type Waitlist = Database['public']['Tables']['Waitlists']['Row']
