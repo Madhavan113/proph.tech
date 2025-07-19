@@ -33,25 +33,38 @@ export function useBalance() {
   useEffect(() => {
     fetchBalance()
 
-    // Set up real-time subscription to credit_transactions
-    const channel = supabase
-      .channel('balance-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'credit_transactions'
-        },
-        () => {
-          // Refetch balance when transactions change
-          fetchBalance()
-        }
-      )
-      .subscribe()
+    // Set up real-time subscription to users table for balance changes
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const channel = supabase
+          .channel('balance-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'users',
+              filter: `id=eq.${user.id}`
+            },
+            () => {
+              // Refetch balance when user balance changes
+              fetchBalance()
+            }
+          )
+          .subscribe()
 
+        return () => {
+          supabase.removeChannel(channel)
+        }
+      }
+    }
+
+    const cleanup = setupSubscription()
+    
     return () => {
-      supabase.removeChannel(channel)
+      cleanup?.then(cleanupFn => cleanupFn?.())
     }
   }, [supabase])
 

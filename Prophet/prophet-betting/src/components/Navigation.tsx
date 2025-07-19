@@ -114,6 +114,14 @@ export default function Navigation() {
                     <p className="text-xs text-muted">Signed in as</p>
                     <p className="text-sm truncate">{user?.email}</p>
                   </div>
+                  <Link href="/my-bets">
+                    <button
+                      onClick={() => setShowUserMenu(false)}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer"
+                    >
+                      My Bets
+                    </button>
+                  </Link>
                   <button
                     onClick={async () => {
                       await supabase.auth.signOut()

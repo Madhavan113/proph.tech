@@ -262,43 +262,49 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 0.875rem;
+  cursor: pointer;
+  user-select: none;
 }
 
 .btn-yes {
-  background: var(--prophet-green);
-  color: var(--prophet-black);
-  border: 1px solid var(--prophet-green);
+  background: transparent;
+  color: var(--prophet-green);
+  border: 2px solid var(--prophet-green);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-yes:hover {
-  background: var(--prophet-green-dark);
-  border-color: var(--prophet-green-dark);
+  background: var(--prophet-green);
+  color: var(--prophet-black);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 217, 100, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 217, 100, 0.3);
 }
 
 .btn-no {
-  background: var(--prophet-black);
-  color: var(--prophet-white);
-  border: 1px solid var(--prophet-black);
+  background: transparent;
+  color: var(--foreground);
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .dark .btn-no {
-  background: var(--prophet-white);
-  color: var(--prophet-black);
-  border: 1px solid var(--prophet-white);
+  color: var(--foreground);
+  border-color: var(--border);
 }
 
 .btn-no:hover {
-  background: var(--gray-800);
-  border-color: var(--gray-800);
+  background: var(--foreground);
+  color: var(--background);
+  border-color: var(--foreground);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .dark .btn-no:hover {
-  background: var(--gray-200);
-  border-color: var(--gray-200);
+  background: var(--foreground);
+  color: var(--background);
 }
 
 /* Input Fields */
@@ -319,6 +325,17 @@ h1, h2, h3, h4, h5, h6 {
 
 .input::placeholder {
   color: var(--muted);
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 /* Probability Display */
