@@ -22,18 +22,15 @@ export default function CreatePage() {
     setError(null)
 
     try {
-      // Client-side validation
+      // Client-side validation matching schema constraints
       if (!formData.title.trim()) {
         throw new Error('Title is required')
       }
-      if (formData.title.length < 3 || formData.title.length > 200) {
-        throw new Error('Title must be between 3 and 200 characters')
+      if (formData.title.length < 1 || formData.title.length > 200) {
+        throw new Error('Title must be between 1 and 200 characters')
       }
-      if (!formData.description.trim()) {
-        throw new Error('Description is required')
-      }
-      if (formData.description.length < 10 || formData.description.length > 1000) {
-        throw new Error('Description must be between 10 and 1000 characters')
+      if (formData.description.trim() && (formData.description.length < 1 || formData.description.length > 1000)) {
+        throw new Error('Description must be between 1 and 1000 characters when provided')
       }
       if (!formData.deadline) {
         throw new Error('Deadline is required')
@@ -43,35 +40,43 @@ export default function CreatePage() {
       if (deadlineDate <= now) {
         throw new Error('Deadline must be in the future')
       }
-      if (!formData.minimumStake || parseFloat(formData.minimumStake) <= 0) {
-        throw new Error('Valid minimum stake is required')
+      
+      const minimumStakeNum = parseFloat(formData.minimumStake)
+      if (!formData.minimumStake || isNaN(minimumStakeNum) || minimumStakeNum < 1 || minimumStakeNum > 1000000) {
+        throw new Error('Minimum stake must be between 1 and 1,000,000')
       }
+      
       if (formData.arbitratorType === 'friend' && !formData.arbitratorEmail.trim()) {
         throw new Error('Arbitrator email is required when selecting a friend')
       }
+
+      const requestBody = {
+        title: formData.title.trim(),
+        description: formData.description.trim() || null,
+        deadline: deadlineDate.toISOString(),
+        arbitrator_type: formData.arbitratorType,
+        arbitrator_email: formData.arbitratorType === 'friend' ? formData.arbitratorEmail.trim() : null,
+        minimum_stake: minimumStakeNum
+      }
+
+      console.log('Sending request body:', requestBody)
 
       const response = await fetch('/api/create-market', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          deadline: deadlineDate.toISOString(),
-          arbitrator_type: formData.arbitratorType,
-          arbitrator_email: formData.arbitratorType === 'friend' ? formData.arbitratorEmail : null,
-          stake_amount: parseFloat(formData.minimumStake)
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {
         const errorData = await response.json()
+        console.log('API Error Response:', errorData)
         throw new Error(errorData.error || 'Failed to create market')
       }
 
       const data = await response.json()
-      router.push(`/bet/${data.bet_id}`)
+      router.push('/feed')
     } catch (error) {
       console.error('Error creating market:', error)
       setError(error instanceof Error ? error.message : 'Failed to create market')
@@ -116,14 +121,14 @@ export default function CreatePage() {
                 maxLength={200}
               />
               <p className="mt-3 text-sm text-gray-500">
-                Frame as a yes/no question that can be definitively resolved (3-200 characters)
+                Frame as a yes/no question that can be definitively resolved (1-200 characters)
               </p>
             </div>
 
             {/* Description */}
             <div className="mt-8">
               <label className="block text-sm font-medium mb-3 text-gray-300">
-                Resolution Criteria
+                Resolution Criteria <span className="text-gray-500">(Optional)</span>
               </label>
               <textarea
                 value={formData.description}
@@ -131,12 +136,11 @@ export default function CreatePage() {
                 className="w-full px-4 py-3 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-gray-900 text-white placeholder-gray-500 resize-none"
                 rows={4}
                 placeholder="Specify exact conditions for YES resolution..."
-                required
                 disabled={loading}
                 maxLength={1000}
               />
               <p className="mt-2 text-sm text-gray-500">
-                Detailed description of how this market will be resolved (10-1000 characters)
+                Detailed description of how this market will be resolved (1-1000 characters, optional)
               </p>
             </div>
           </div>
@@ -172,10 +176,14 @@ export default function CreatePage() {
                 onChange={(e) => handleInputChange('minimumStake', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-gray-900 text-white"
                 min="1"
+                max="1000000"
                 step="1"
                 required
                 disabled={loading}
               />
+              <p className="mt-2 text-sm text-gray-500">
+                Range: 1 to 1,000,000
+              </p>
             </div>
           </div>
 
