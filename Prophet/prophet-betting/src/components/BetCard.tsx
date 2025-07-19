@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useBalance } from '@/hooks/useBalance'
 
 interface BetCardProps {
   bet: {
@@ -23,9 +24,10 @@ interface BetCardProps {
     minimum_stake?: number
   }
   index?: number
+  onBetPlaced?: () => void | Promise<void>
 }
 
-export default function BetCard({ bet, index = 0 }: BetCardProps) {
+export default function BetCard({ bet, index = 0, onBetPlaced }: BetCardProps) {
   console.log('🎲 BetCard rendered for market:', bet.id, bet.title)
   
   const deadlineDate = new Date(bet.deadline)
@@ -41,6 +43,10 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
   const [betAmount, setBetAmount] = useState(bet.minimum_stake || 10)
   const [isPlacingBet, setIsPlacingBet] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  // Use balance hook to refresh balance after bet
+  const { refetch: refreshBalance } = useBalance()
 
   // Debug state changes
   console.log('🎲 BetCard state:', { activeInput, betAmount, isPlacingBet, error })
@@ -53,6 +59,7 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
       console.log('🔄 Setting isPlacingBet to true...')
       setIsPlacingBet(true)
       setError(null)
+      setSuccessMessage(null)
 
       const requestBody = {
         market_id: bet.id,
@@ -61,9 +68,7 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
       }
 
       console.log('🚀 About to make API call with data:', requestBody)
-      console.log('🌐 Fetch URL: /api/place-bet')
 
-      console.log('🌐 Making fetch request to: /api/place-bet-debug')
       const response = await fetch('/api/place-bet-authenticated', {
         method: 'POST',
         headers: {
@@ -75,7 +80,6 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
       console.log('📡 Response received!')
       console.log('📡 Response status:', response.status)
       console.log('📡 Response OK:', response.ok)
-      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()))
 
       const responseText = await response.text()
       console.log('📄 Raw response:', responseText)
@@ -99,8 +103,19 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
       setActiveInput(null)
       setBetAmount(bet.minimum_stake || 10)
       
-      // Show success message with new balance
-      alert(`${position.toUpperCase()} bet of ${amount} placed successfully! New balance: ${data.new_balance}`)
+      // Refresh balance in navigation
+      await refreshBalance()
+      
+      // Refresh market data if callback provided
+      if (onBetPlaced) {
+        await onBetPlaced()
+      }
+      
+      // Show success message
+      setSuccessMessage(`${position.toUpperCase()} bet of ${amount} placed successfully!`)
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000)
       
     } catch (error) {
       console.error('❌ CRITICAL ERROR in placeBet:', error)
@@ -145,6 +160,29 @@ export default function BetCard({ bet, index = 0 }: BetCardProps) {
               {bet.minimum_stake || 10}
             </div>
           </div>
+          
+          {/* Success/Error Messages */}
+          {successMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-4 left-4 right-16 z-20 bg-prophet-green text-prophet-black px-3 py-2 rounded-md text-sm font-medium"
+            >
+              {successMessage}
+            </motion.div>
+          )}
+          
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-4 left-4 right-16 z-20 bg-red-500 text-white px-3 py-2 rounded-md text-sm font-medium"
+            >
+              {error}
+            </motion.div>
+          )}
           
           {/* Content */}
           <div className="relative z-10 flex flex-col h-full">

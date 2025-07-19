@@ -151,7 +151,8 @@ export default function FeedPage() {
                     Math.round((market.total_pool_for / market.total_pool) * 100) : 50,
                   minimum_stake: market.minimum_stake || 10
                 }} 
-                index={index} 
+                index={index}
+                onBetPlaced={fetchMarkets}
               />
             ))}
           </div>

@@ -47,10 +47,27 @@ export async function POST(request: NextRequest) {
     if (userData.balance < bet_amount) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
     }
+
+    // Check if market exists and is active
+    const { data: market, error: marketError } = await supabase
+      .from('markets')
+      .select('id, title, status, resolved, deadline, total_pool_for, total_pool_against, total_pool')
+      .eq('id', market_id)
+      .single()
+
+    if (marketError || !market) {
+      return NextResponse.json({ error: 'Market not found' }, { status: 404 })
+    }
+
+    if (market.status !== 'active' || market.resolved) {
+      return NextResponse.json({ error: 'Market is not accepting bets' }, { status: 400 })
+    }
+
+    if (new Date(market.deadline) <= new Date()) {
+      return NextResponse.json({ error: 'Market deadline has passed' }, { status: 400 })
+    }
     
     console.log('💾 Making AUTHENTICATED insert with RLS context...')
-    
-    // The rpc call to 'debug_auth_context' has been removed as it does not exist in the database.
     
     // Insert bet with authenticated context - RLS will see auth.uid()
     const { data: bet, error: betError } = await supabase
@@ -77,12 +94,62 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ Bet inserted successfully:', bet.id)
     
-    // Update balance
+    // Update user balance
     const newBalance = userData.balance - bet_amount
-    await supabase
+    const { error: balanceError } = await supabase
       .from('users')
       .update({ balance: newBalance })
       .eq('id', user.id)
+
+    if (balanceError) {
+      console.error('❌ Balance update error:', balanceError)
+      return NextResponse.json({ error: 'Failed to update balance' }, { status: 500 })
+    }
+
+    // Update market totals
+    console.log('📊 Updating market totals...')
+    const currentTotalFor = Number(market.total_pool_for || 0)
+    const currentTotalAgainst = Number(market.total_pool_against || 0)
+    const currentTotal = Number(market.total_pool || 0)
+
+    const newTotalFor = position === 'yes' ? currentTotalFor + bet_amount : currentTotalFor
+    const newTotalAgainst = position === 'no' ? currentTotalAgainst + bet_amount : currentTotalAgainst
+    const newTotal = currentTotal + bet_amount
+
+    const { data: updatedMarket, error: marketUpdateError } = await supabase
+      .from('markets')
+      .update({
+        total_pool_for: newTotalFor,
+        total_pool_against: newTotalAgainst,
+        total_pool: newTotal,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', market_id)
+      .select('total_pool_for, total_pool_against, total_pool')
+      .single()
+
+    if (marketUpdateError) {
+      console.error('❌ Market update error:', marketUpdateError)
+      // Continue anyway - bet was placed successfully
+    } else {
+      console.log('✅ Market totals updated:', updatedMarket)
+    }
+
+    // Record credit transaction for history
+    const { error: creditError } = await supabase
+      .from('credit_transactions')
+      .insert({
+        user_id: user.id,
+        amount: -bet_amount,
+        transaction_type: 'bet',
+        description: `Bet placed: ${position.toUpperCase()} on "${market.title}"`,
+        bet_id: bet.id
+      })
+
+    if (creditError) {
+      console.error('Credit transaction error:', creditError)
+      // Continue anyway - balance was updated successfully
+    }
       
     return NextResponse.json({
       success: true,
@@ -93,7 +160,12 @@ export async function POST(request: NextRequest) {
         amount: bet_amount,
         market_id: market_id
       },
-      new_balance: newBalance
+      new_balance: newBalance,
+      market_totals: updatedMarket || {
+        total_pool_for: newTotalFor,
+        total_pool_against: newTotalAgainst,
+        total_pool: newTotal
+      }
     })
     
   } catch (error) {

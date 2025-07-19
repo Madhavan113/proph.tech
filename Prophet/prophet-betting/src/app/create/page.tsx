@@ -28,10 +28,10 @@ export default function CreatePage() {
       const requestBody = {
         title: formData.title.trim(),
         description: formData.description.trim() || null,
-        deadline: deadlineDate.toISOString(),
+        deadline: new Date(formData.deadline).toISOString(),
         arbitrator_type: formData.arbitratorType,
         arbitrator_email: formData.arbitratorType === 'friend' ? formData.arbitratorEmail.trim() : null,
-        minimum_stake: minimumStakeNum
+        minimum_stake: parseFloat(formData.minimumStake)
       }
 
 
