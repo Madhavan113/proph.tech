@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 
 // Animated Scramble Text Component
 const AnimatedScrambleText = ({ 
@@ -253,21 +255,76 @@ export default function Home() {
   const welcomeTimeout = useRef<NodeJS.Timeout | null>(null);
   const fadeTimeout = useRef<NodeJS.Timeout | null>(null);
   const [email, setEmail] = useState("");
+  const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
+  const [user, setUser] = useState<User | null>(null)
+  const supabase = createClient()
 
-  const handleEmailSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
+  const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setShowWelcome(true);
-    setIsFading(false);
-    setIsVisible(false);
-    setEmail("");
-    if (welcomeTimeout.current) clearTimeout(welcomeTimeout.current);
-    if (fadeTimeout.current) clearTimeout(fadeTimeout.current);
-    // Fade out after 3s
-    welcomeTimeout.current = setTimeout(() => {
-      setIsFading(true);
-      fadeTimeout.current = setTimeout(() => setShowWelcome(false), 500);
-    }, 3000);
+    
+    if (!email.trim()) {
+      return;
+    }
+
+    setIsSubmittingEmail(true);
+
+    try {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Success - show welcome message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setShowWelcome(true);
+        setIsFading(false);
+        setIsVisible(false);
+        setEmail("");
+        if (welcomeTimeout.current) clearTimeout(welcomeTimeout.current);
+        if (fadeTimeout.current) clearTimeout(fadeTimeout.current);
+        // Fade out after 3s
+        welcomeTimeout.current = setTimeout(() => {
+          setIsFading(true);
+          fadeTimeout.current = setTimeout(() => setShowWelcome(false), 500);
+        }, 3000);
+      } else {
+        // Error - show error message briefly
+        const originalEmail = email;
+        setEmail('');
+        setTimeout(() => {
+          setEmail(originalEmail);
+        }, 100);
+        
+        // You could also show an error toast here
+        console.error('Waitlist error:', data.error);
+        alert(data.error || 'Failed to join waitlist. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting email:', error);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmittingEmail(false);
+    }
   };
 
   useEffect(() => {
@@ -302,32 +359,39 @@ export default function Home() {
         <div className="absolute top-8 left-8 z-20 flex items-center">
           <Image src="/gamma.png" alt="Gamma" width={32} height={32} className="w-8 h-8" />
         </div>
-        {/* Waitlist button in top right */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="absolute top-8 right-8 z-20 flex gap-16"
-        >
-          <Link href="/demo">
+        {/* Waitlist button in top right - only show when not logged in */}
+        {!user && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="absolute top-8 right-8 z-20 flex gap-16"
+          >
+            <Link href="/demo">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="text-sm md:text-base text-white hover:text-gray-200 transition-colors duration-200 font-serif cursor-pointer"
+              >
+                Demo
+              </motion.button>
+            </Link>
             <motion.button
+              onClick={() => {
+                const element = document.querySelector('[data-section="waitlist"]')
+                if (element) {
+                  const y = element.getBoundingClientRect().top + window.scrollY - 64;
+                  window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+              }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="text-sm md:text-base text-white hover:text-gray-200 transition-colors duration-200 font-serif"
-            >
-              Demo
-            </motion.button>
-          </Link>
-          <Link href="/signup">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="text-sm md:text-base text-white hover:text-gray-200 transition-colors duration-200 font-serif"
+              className="text-sm md:text-base text-white hover:text-gray-200 transition-colors duration-200 font-serif cursor-pointer"
             >
               Waitlist
             </motion.button>
-          </Link>
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Simple centered content */}
         <div className="relative z-10 text-center px-6 max-w-2xl mx-auto -mt-240">
@@ -352,7 +416,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="btn bg-black hover:bg-green-600 text-green-500 hover:text-black border-green-500 hover:border-green-600 px-8 py-3 rounded-full text-base transition-all duration-200 hover:transform hover:-translate-y-1 hover:shadow-lg"
+                  className="btn bg-black hover:bg-green-600 text-green-500 hover:text-black border-green-500 hover:border-green-600 px-8 py-3 rounded-full text-base transition-all duration-200 hover:transform hover:-translate-y-1 hover:shadow-lg cursor-pointer"
                 >
                   Get Started
                 </motion.button>
@@ -362,7 +426,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="btn btn-secondary px-8 py-3 rounded-full text-base"
+                  className="btn btn-secondary px-8 py-3 rounded-full text-base cursor-pointer"
                 >
                   Sign In
                 </motion.button>
@@ -410,17 +474,19 @@ export default function Home() {
             Become a prophet and bet on anything and anyone, anytime.<br /><br />
             Our team is heavily inspired by Bob Doyle’s work: <a href="https://www.informationphilosopher.com/" className="text-green-500 hover:text-green-400 transition-colors duration-200" target="_blank" rel="noopener noreferrer">https://www.informationphilosopher.com/</a>
           </p>
-          <h3 className="text-base md:text-lg text-green-500 font-serif mt-6 mb-4 text-left">
-            <AnimatedScrambleText 
-              text="private beta"
-              scrambleDuration={1500}
-              revealDuration={750}
-              scrambleInterval={75}
-            />
-          </h3>
-          <p className="text-xs md:text-sm text-muted font-serif leading-relaxed text-left mb-0">
-            Sign up below to join the waitlist.
-          </p>
+          <div data-section="waitlist">
+            <h3 className="text-base md:text-lg text-green-500 font-serif mt-6 mb-4 text-left">
+              <AnimatedScrambleText 
+                text="private beta"
+                scrambleDuration={1500}
+                revealDuration={750}
+                scrambleInterval={75}
+              />
+            </h3>
+            <p className="text-xs md:text-sm text-muted font-serif leading-relaxed text-left mb-0">
+              Sign up below to join the waitlist.
+            </p>
+          </div>
           <form className="flex items-center gap-2 mt-1 mb-16" onSubmit={handleEmailSubmit}>
             <input
               type="email"
@@ -429,12 +495,14 @@ export default function Home() {
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
+              disabled={isSubmittingEmail}
             />
             <button
               type="submit"
-              className="px-3 py-[4px] rounded-lg bg-black border border-white text-white text-[0.7rem] font-serif hover:bg-gray-900 transition-colors duration-150"
+              disabled={isSubmittingEmail}
+              className="px-3 py-[4px] rounded-lg bg-black border border-white text-white text-[0.7rem] font-serif hover:bg-gray-900 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              📩
+              {isSubmittingEmail ? '⏳' : '📩'}
             </button>
           </form>
           <h3 className="text-base md:text-lg text-green-500 font-serif mt-6 mb-4 text-left">

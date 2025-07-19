@@ -4,8 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -16,198 +14,159 @@ export default function SignupPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
+      })
 
-    if (error) {
-      setError(error.message)
+      if (error) {
+        setError(error.message)
+      } else {
+        setError('Check your email to confirm your account!')
+        setTimeout(() => router.push('/login'), 3000)
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+    } finally {
       setLoading(false)
-    } else {
-      setError('Check your email to confirm your account!')
-      setTimeout(() => router.push('/login'), 3000)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="w-full max-w-md"
-      >
-        <div className="prophet-card rounded-lg p-8">
+    <div className="min-h-screen flex items-center justify-center px-6 py-12 bg-black">
+      <div className="w-full max-w-md">
+        <div className="bg-black border border-gray-800 rounded-lg p-8 shadow-lg">
           {/* Header */}
           <div className="text-center mb-8">
             <Link href="/">
-              <motion.h1
-                whileHover={{ scale: 1.02 }}
-                className="font-display text-4xl font-bold mb-2 cursor-pointer"
-              >
+              <h1 className="font-bold text-4xl mb-2 cursor-pointer text-white hover:scale-105 transition-transform duration-200">
                 Prophet
-              </motion.h1>
+              </h1>
             </Link>
-            <p className="text-muted">
+            <p className="text-gray-400">
               Create your account
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSignup} className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <label className="block text-sm font-medium mb-2">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-300">
                 Display Name
               </label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="input w-full px-4 py-3 rounded-lg"
+                className="w-full px-4 py-3 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-gray-900 text-white placeholder-gray-500"
                 placeholder="Your name"
                 required
+                disabled={loading}
               />
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <label className="block text-sm font-medium mb-2">
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-300">
                 Email
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input w-full px-4 py-3 rounded-lg"
+                className="w-full px-4 py-3 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-gray-900 text-white placeholder-gray-500"
                 placeholder="you@example.com"
                 required
+                disabled={loading}
               />
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <label className="block text-sm font-medium mb-2">
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-300">
                 Password
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input w-full px-4 py-3 rounded-lg"
+                className="w-full px-4 py-3 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-gray-900 text-white placeholder-gray-500"
                 placeholder="••••••••"
                 required
                 minLength={6}
+                disabled={loading}
               />
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-gray-500">
                 Minimum 6 characters
               </p>
-            </motion.div>
+            </div>
 
             {error && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className={cn(
-                  "text-sm text-center p-3 rounded-lg",
-                  error.includes('Check your email') 
-                    ? "bg-prophet-green/10 text-prophet-green border border-prophet-green/20" 
-                    : "bg-red-500/10 text-red-500 border border-red-500/20"
-                )}
-              >
+              <div className={`text-sm text-center p-3 rounded-lg ${
+                error.includes('Check your email') 
+                  ? "bg-green-900/20 text-green-400 border border-green-800" 
+                  : "bg-red-900/20 text-red-400 border border-red-800"
+              }`}>
                 {error}
-              </motion.div>
+              </div>
             )}
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
+            <div>
               <button
                 type="submit"
                 disabled={loading}
-                className={cn(
-                  "w-full btn btn-primary py-3 rounded-full",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
+                className="w-full bg-green-600 text-black py-3 px-4 rounded-lg font-medium hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
-            </motion.div>
+            </div>
           </form>
 
           {/* Terms */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-6 text-center"
-          >
-            <p className="text-xs text-muted">
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500">
               By signing up, you agree to our Terms and Privacy Policy
             </p>
-          </motion.div>
+          </div>
 
           {/* Divider */}
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
+              <div className="w-full border-t border-gray-800"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-background text-muted">Already have an account?</span>
+              <span className="px-2 bg-black text-gray-500">Already have an account?</span>
             </div>
           </div>
 
           {/* Footer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="text-center"
-          >
+          <div className="text-center">
             <Link
               href="/login"
-              className="text-prophet-green hover:underline font-medium"
+              className="text-green-500 hover:text-green-400 font-medium"
             >
               Sign in instead
             </Link>
-          </motion.div>
+          </div>
         </div>
 
         {/* Benefits */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="mt-8 text-center"
-        >
-          <p className="text-sm text-muted">
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500">
             Start with 1000 credits • Create unlimited markets • Trade on anything
           </p>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   )
 }
