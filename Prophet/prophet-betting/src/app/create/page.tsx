@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 export default function CreatePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<Record<string, string | null>>({})
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -19,36 +19,11 @@ export default function CreatePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError(null)
+    setErrors({})
 
     try {
-      // Client-side validation matching schema constraints
-      if (!formData.title.trim()) {
-        throw new Error('Title is required')
-      }
-      if (formData.title.length < 1 || formData.title.length > 200) {
-        throw new Error('Title must be between 1 and 200 characters')
-      }
-      if (formData.description.trim() && (formData.description.length < 1 || formData.description.length > 1000)) {
-        throw new Error('Description must be between 1 and 1000 characters when provided')
-      }
-      if (!formData.deadline) {
-        throw new Error('Deadline is required')
-      }
-      const deadlineDate = new Date(formData.deadline)
-      const now = new Date()
-      if (deadlineDate <= now) {
-        throw new Error('Deadline must be in the future')
-      }
-      
-      const minimumStakeNum = parseFloat(formData.minimumStake)
-      if (!formData.minimumStake || isNaN(minimumStakeNum) || minimumStakeNum < 1 || minimumStakeNum > 1000000) {
-        throw new Error('Minimum stake must be between 1 and 1,000,000')
-      }
-      
-      if (formData.arbitratorType === 'friend' && !formData.arbitratorEmail.trim()) {
-        throw new Error('Arbitrator email is required when selecting a friend')
-      }
+      // Client-side validation is good, but we will primarily rely on the API's response
+      // to ensure a single source of truth for validation logic.
 
       const requestBody = {
         title: formData.title.trim(),
@@ -59,7 +34,7 @@ export default function CreatePage() {
         minimum_stake: minimumStakeNum
       }
 
-      console.log('Sending request body:', requestBody)
+
 
       const response = await fetch('/api/create-market', {
         method: 'POST',
@@ -71,15 +46,23 @@ export default function CreatePage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.log('API Error Response:', errorData)
-        throw new Error(errorData.error || 'Failed to create market')
+        if (errorData.validation_errors) {
+          const newErrors: Record<string, string> = {}
+          for (const error of errorData.validation_errors) {
+            newErrors[error.field] = error.message
+          }
+          setErrors(newErrors)
+        } else {
+          setErrors({ form: errorData.error || 'Failed to create market' })
+        }
+        return
       }
 
       const data = await response.json()
       router.push('/feed')
     } catch (error) {
       console.error('Error creating market:', error)
-      setError(error instanceof Error ? error.message : 'Failed to create market')
+      setErrors({ form: error instanceof Error ? error.message : 'An unexpected error occurred' })
     } finally {
       setLoading(false)
     }
@@ -87,6 +70,10 @@ export default function CreatePage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    // Clear the error for this field when the user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: null }))
+    }
   }
 
   return (
@@ -120,6 +107,7 @@ export default function CreatePage() {
                 disabled={loading}
                 maxLength={200}
               />
+              {errors.title && <p className="mt-2 text-sm text-red-500">{errors.title}</p>}
               <p className="mt-3 text-sm text-gray-500">
                 Frame as a yes/no question that can be definitively resolved (1-200 characters)
               </p>
@@ -139,6 +127,7 @@ export default function CreatePage() {
                 disabled={loading}
                 maxLength={1000}
               />
+              {errors.description && <p className="mt-2 text-sm text-red-500">{errors.description}</p>}
               <p className="mt-2 text-sm text-gray-500">
                 Detailed description of how this market will be resolved (1-1000 characters, optional)
               </p>
@@ -163,6 +152,7 @@ export default function CreatePage() {
                 required
                 disabled={loading}
               />
+              {errors.deadline && <p className="mt-2 text-sm text-red-500">{errors.deadline}</p>}
             </div>
 
             {/* Minimum Stake */}
@@ -181,6 +171,7 @@ export default function CreatePage() {
                 required
                 disabled={loading}
               />
+              {errors.minimum_stake && <p className="mt-2 text-sm text-red-500">{errors.minimum_stake}</p>}
               <p className="mt-2 text-sm text-gray-500">
                 Range: 1 to 1,000,000
               </p>
@@ -231,14 +222,15 @@ export default function CreatePage() {
                   required
                   disabled={loading}
                 />
+                {errors.arbitrator_email && <p className="mt-2 text-sm text-red-500">{errors.arbitrator_email}</p>}
               </div>
             )}
           </div>
 
           {/* Error Display */}
-          {error && (
+          {errors.form && (
             <div className="bg-red-900/20 text-red-400 p-4 rounded-lg border border-red-800">
-              {error}
+              {errors.form}
             </div>
           )}
 

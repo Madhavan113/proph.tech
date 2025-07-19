@@ -4,13 +4,20 @@ import { NextRequest, NextResponse } from 'next/server'
 interface MarketListResponse {
   markets: Array<{
     id: string
-    name: string
+    title: string
     description: string | null
-    category: string | null
-    type: string
-    total_bets: number
+    deadline: string
+    arbitrator_type: string
+    arbitrator_email: string | null
+    minimum_stake: number
+    creator_id: string
+    status: string
+    resolved: boolean
+    resolved_at: string | null
+    outcome: string | null
+    total_pool_for: number
+    total_pool_against: number
     total_pool: number
-    is_active: boolean
     created_at: string
   }>
   pagination: {
@@ -36,31 +43,40 @@ export async function GET(request: NextRequest) {
     
     const offset = (page - 1) * limit
     
-    // Build query
+    // Build query for new schema
     let query = supabase
       .from('markets')
       .select(`
         id,
-        name,
+        title,
         description,
-        category,
-        type,
-        is_active,
-        created_at,
-        bets!inner (
-          id,
-          total_pool
-        )
+        deadline,
+        arbitrator_type,
+        arbitrator_email,
+        minimum_stake,
+        creator_id,
+        status,
+        resolved,
+        resolved_at,
+        outcome,
+        total_pool_for,
+        total_pool_against,
+        total_pool,
+        created_at
       `, { count: 'exact' })
-      .eq('is_active', true)
     
     // Apply filters
-    if (category) {
-      query = query.eq('category', category)
+    const status = searchParams.get('status') || 'all'
+    if (status !== 'all') {
+      if (status === 'active') {
+        query = query.eq('status', 'active').eq('resolved', false)
+      } else if (status === 'resolved') {
+        query = query.eq('resolved', true)
+      }
     }
     
     if (search) {
-      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
     }
     
     // Apply sorting and pagination
@@ -77,18 +93,8 @@ export async function GET(request: NextRequest) {
       }, { status: 500 })
     }
     
-    // Transform data to include aggregated stats
-    const transformedMarkets = markets?.map(market => ({
-      id: market.id,
-      name: market.name,
-      description: market.description,
-      category: market.category,
-      type: market.type,
-      total_bets: market.bets?.length || 0,
-      total_pool: market.bets?.reduce((sum: number, bet: any) => sum + Number(bet.total_pool || 0), 0) || 0,
-      is_active: market.is_active,
-      created_at: market.created_at
-    })) || []
+    // Return markets data directly (no transformation needed for new schema)
+    const transformedMarkets = markets || []
     
     const totalPages = Math.ceil((count || 0) / limit)
     
@@ -136,19 +142,19 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json()
-    const { name, description, category, type = 'binary' } = body
+    const { title, description, deadline, arbitrator_type, arbitrator_email, minimum_stake = 10 } = body
     
     // Validate required fields
-    if (!name || !category) {
+    if (!title || !deadline || !arbitrator_type) {
       return NextResponse.json({
-        error: 'Missing required fields: name, category'
+        error: 'Missing required fields: title, deadline, arbitrator_type'
       }, { status: 400 })
     }
     
-    // Validate type
-    if (!['binary', 'multiple_choice', 'numeric'].includes(type)) {
+    // Validate arbitrator type
+    if (!['creator', 'friend', 'ai'].includes(arbitrator_type)) {
       return NextResponse.json({
-        error: 'Invalid market type. Must be binary, multiple_choice, or numeric'
+        error: 'Invalid arbitrator type. Must be creator, friend, or ai'
       }, { status: 400 })
     }
     
@@ -156,11 +162,18 @@ export async function POST(request: NextRequest) {
     const { data: market, error } = await supabase
       .from('markets')
       .insert({
-        name,
+        title,
         description,
-        category,
-        type,
-        created_by: user.id
+        deadline,
+        arbitrator_type,
+        arbitrator_email: arbitrator_type === 'friend' ? arbitrator_email : null,
+        minimum_stake,
+        creator_id: user.id,
+        status: 'active',
+        resolved: false,
+        total_pool_for: 0,
+        total_pool_against: 0,
+        total_pool: 0
       })
       .select()
       .single()
@@ -170,7 +183,7 @@ export async function POST(request: NextRequest) {
       
       if (error.code === '23505') { // Unique constraint violation
         return NextResponse.json({
-          error: 'A market with this name already exists'
+          error: 'A market with this title already exists'
         }, { status: 400 })
       }
       

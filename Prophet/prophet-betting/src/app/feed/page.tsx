@@ -5,32 +5,33 @@ import { motion } from 'framer-motion'
 import BetCard from '@/components/BetCard'
 import { cn } from '@/lib/utils'
 
-interface Bet {
+interface Market {
   id: string
   title: string
   description?: string
   deadline: string
-  creator?: {
-    username?: string
-    full_name?: string
-  }
-  participant_count?: number
+  creator_id?: string
+  arbitrator_type?: string
+  minimum_stake?: number
+  total_pool_for?: number
+  total_pool_against?: number
   total_pool?: number
   resolved?: boolean
-  outcome?: boolean | null
-  yes_percentage?: number
+  outcome?: string | null
+  status?: string
+  created_at?: string
 }
 
 export default function FeedPage() {
-  const [bets, setBets] = useState<Bet[]>([])
+  const [markets, setMarkets] = useState<Market[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'active' | 'resolved'>('all')
 
   useEffect(() => {
-    fetchBets()
+    fetchMarkets()
   }, [filter])
 
-  const fetchBets = async () => {
+  const fetchMarkets = async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -40,16 +41,16 @@ export default function FeedPage() {
         order: 'desc'
       })
 
-      const response = await fetch(`/api/bets?${params}`)
+      const response = await fetch(`/api/markets?${params}`)
       if (!response.ok) {
-        throw new Error('Failed to fetch bets')
+        throw new Error('Failed to fetch markets')
       }
 
       const data = await response.json()
-      setBets(data.bets || [])
+      setMarkets(data.markets || [])
     } catch (error) {
-      console.error('Error fetching bets:', error)
-      setBets([])
+      console.error('Error fetching markets:', error)
+      setMarkets([])
     } finally {
       setLoading(false)
     }
@@ -114,7 +115,7 @@ export default function FeedPage() {
               />
             ))}
           </div>
-        ) : bets.length === 0 ? (
+        ) : markets.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -134,14 +135,30 @@ export default function FeedPage() {
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bets.map((bet, index) => (
-              <BetCard key={bet.id} bet={bet} index={index} />
+            {markets.map((market, index) => (
+              <BetCard 
+                key={market.id} 
+                bet={{
+                  id: market.id,
+                  title: market.title,
+                  description: market.description,
+                  deadline: market.deadline,
+                  total_pool: market.total_pool || 0,
+                  resolved: market.resolved || false,
+                  outcome: market.outcome === 'yes' ? true : market.outcome === 'no' ? false : null,
+                  participant_count: 0, // Will need to calculate this later
+                  yes_percentage: market.total_pool_for && market.total_pool ? 
+                    Math.round((market.total_pool_for / market.total_pool) * 100) : 50,
+                  minimum_stake: market.minimum_stake || 10
+                }} 
+                index={index} 
+              />
             ))}
           </div>
         )}
 
         {/* Load More */}
-        {bets.length >= 20 && (
+        {markets.length >= 20 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
