@@ -34,7 +34,6 @@ export default function Navigation() {
   const navItems = [
     { href: '/feed', label: 'Markets' },
     { href: '/create', label: 'Create' },
-    { href: '/my-bets', label: 'My Bets' },
   ]
 
   if (!user) return null
