@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { evaluatePasswordStrength } from '@/lib/password-strength'
+import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -14,10 +16,19 @@ export default function SignupPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+
+    // Check password strength before submitting
+    if (!passwordStrength.isStrong) {
+      setError('Please use a stronger password that meets all requirements')
+      setLoading(false)
+      return
+    }
 
     try {
       const { error } = await supabase.auth.signUp({
@@ -103,12 +114,13 @@ export default function SignupPage() {
                 className="w-full px-4 py-3 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-gray-900 text-white placeholder-gray-500"
                 placeholder="••••••••"
                 required
-                minLength={6}
                 disabled={loading}
               />
-              <p className="mt-2 text-sm text-gray-500">
-                Minimum 6 characters
-              </p>
+              
+              {/* Password Strength Indicator */}
+              <div className="mt-3">
+                <PasswordStrengthIndicator password={password} />
+              </div>
             </div>
 
             {error && (
@@ -124,10 +136,19 @@ export default function SignupPage() {
             <div>
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-green-600 text-black py-3 px-4 rounded-lg font-medium hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                disabled={loading || (password.length > 0 && !passwordStrength.isStrong)}
+                className={`w-full py-3 px-4 rounded-lg font-medium focus:outline-none focus:ring-2 transition-colors ${
+                  loading || (password.length > 0 && !passwordStrength.isStrong)
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-green-600 text-black hover:bg-green-500 focus:ring-green-500 cursor-pointer'
+                }`}
               >
-                {loading ? 'Creating account...' : 'Create Account'}
+                {loading 
+                  ? 'Creating account...' 
+                  : (password.length > 0 && !passwordStrength.isStrong)
+                    ? 'Password must be stronger'
+                    : 'Create Account'
+                }
               </button>
             </div>
           </form>
