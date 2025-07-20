@@ -122,6 +122,14 @@ export default function Navigation() {
                       My Bets
                     </button>
                   </Link>
+                  <Link href="/credits">
+                    <button
+                      onClick={() => setShowUserMenu(false)}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer"
+                    >
+                      Buy Credits
+                    </button>
+                  </Link>
                   <button
                     onClick={async () => {
                       await supabase.auth.signOut()
